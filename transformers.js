@@ -289,7 +289,7 @@ const s3ImageTransformer = {
 
     const objects = enums.map(({ name, values }) => schema.createEnumType({
       name: `s3Image${name}`,
-      values: Object.fromEntries((values.map(value => [value.toUpperCase().replace(':', '_'), { value }]))
+      values: Object.fromEntries(values.map(value => [value.toUpperCase().replace(':', '_'), { value }]))
     }))
 
     objects.push(
@@ -312,7 +312,7 @@ const s3ImageTransformer = {
       const type = options.arg.type === 'enum' ? `s3Image${options.arg.name}` : options.arg.type === 'array' ? [`s3Image${options.arg.name}`] : options.arg.type
       args.push([name, type])
     }
-    return Object.fromEntries((args)
+    return Object.fromEntries(args)
   }
 }
 
