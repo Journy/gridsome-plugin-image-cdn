@@ -1,6 +1,6 @@
 {
   "name": "@journy/gridsome-plugin-image-cdn",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Image CDN plugin for Gridsome, allowing you to add image query params with GraphQL. Forked from https://github.com/thetre97/gridsome-plugin-image-cdn.git",
   "main": "gridsome.server.js",
   "author": {
@@ -17,7 +17,7 @@
     "images"
   ],
   "engines": {
-    "node": ">= 12.x"
+    "node": ">= 10.x"
   },
   "devDependencies": {
     "babel-eslint": "10.1.0",
@@ -32,6 +32,7 @@
   "publishConfig": {
     "access": "restricted"
   },
-  "dependencies": {}
+  "dependencies": {
+    "object.fromentries": "es-shims/Object.fromEntries"
+  }
 }
-
