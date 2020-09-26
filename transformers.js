@@ -212,8 +212,113 @@ const sirvTransformer = {
   }
 }
 
+const s3ImageTransformer = {
+  // Create a map of all available transforms, and their prefixes
+  transformArgs: new Map([
+    ['sizes', { prefix: 's', arg: { type: 'array', name: 'Size' }}],
+    ['rotate', { prefix: 'r', arg: { type: 'Int' } }],
+    ['flip', { prefix: 'fl', arg: { type: 'Boolean' } }],
+    ['flop', { prefix: 'fo', arg: { type: 'Boolean' } }],
+    ['sharpen', { prefix: 's', arg: { type: 'String' } }],
+    ['median', { prefix: 'm', arg: { type: 'Int' } }],
+    ['blur', { prefix: 'b', arg: { type: 'Float' } }],
+    ['flatten', { prefix: 'fa', arg: { type: 'String' } }],
+    ['gamma', { prefix: 'g', arg: { type: 'Float' } }],
+    ['negate', { prefix: 'n', arg: { type: 'Boolean' } }],
+    ['normalise', { prefix: 'no', arg: { type: 'Boolean' } }],
+    ['normalize', { prefix: 'no', arg: { type: 'Boolean' } }],
+    ['convolve', { prefix: 'c', arg: { type: 'String' } }],
+    ['threshold', { prefix: 't', arg: { type: 'Int' } }],
+    ['linear', { prefix: 'l', arg: { type: 'Float' } }],
+    ['recomb', { prefix: 're', arg: { type: 'String' } }],
+    ['modulate', { prefix: 'mo', arg: { type: 'String' } }],
+    ['quality', { prefix: 'q', arg: { type: 'Int' } }],
+    ['format', { prefix: 'f', arg: { type: 'enum', name: 'Format', values: ['auto', 'webp', 'jpg', 'jpeg', 'png'] } }],
+  ]),
+  urlCreator: (url, bucket, key, edits) => {
+    const imageRequest = JSON.stringify({
+      bucket: bucket,
+      key: key,
+      edits: edits
+    });
+
+    const baseCodedString = Buffer.from(imageRequest).toString('base64');
+
+    // Return all our joined transforms & url
+    return `${url}/${baseCodedString}`;
+  },
+  transformer: ({ cdn, sourceUrl, args }) => {
+    const transformString = {}
+    // Loop through each argument, and add the respective transform
+    for (const [key, value] of Object.entries(args)) {
+      // Only use the valid transformations for this object
+      if (s3ImageTransformer.transformArgs.get(key)) {
+        transformString[key] = value;
+      }
+    }
+
+    const underJournyControl = sourceUrl.match(/((staging-)?assets.gojourny.com)\/((.*)(?=\?)|(.*\?{0}))/)
+    const { sizes, ...otherTransforms } = transformString
+
+    const sizeUrlImages = sizes.map((size) => {
+      if (underJournyControl && underJournyControl.length > 1) {
+        let transforms = {
+          resize: size,
+          ...otherTransforms
+        }
+        size.url = s3ImageTransformer.urlCreator(cdn.baseUrl, underJournyControl[1], underJournyControl[3], transforms )
+      } else {
+        size.url = sourceUrl
+      }
+      return size
+    })
+
+    return JSON.stringify(sizeUrlImages)
+  },
+  createSchemaTypes: schema => {
+    const enums = []
+
+    // eslint-disable-next-line no-unused-vars
+    for (const [name, options] of s3ImageTransformer.transformArgs) {
+      if (options.arg.type === 'enum') enums.push(options.arg)
+    }
+    enums.push({
+      name: 'Fit',
+      values: ['cover', 'contain', 'fill', 'inside', 'outside']
+    })
+
+    const objects = enums.map(({ name, values }) => schema.createEnumType({
+      name: `s3Image${name}`,
+      values: Object.fromEntries((values.map(value => [value.toUpperCase().replace(':', '_'), { value }]))
+    }))
+
+    objects.push(
+      schema.createInputType({
+        name: 's3ImageSize',
+        fields: {
+          width: 'Int',
+          height: 'Int',
+          fit: {type: 's3ImageFit' },
+        }
+      })
+    )
+
+    return objects
+  },
+  createResolverArgs: () => {
+    const args = []
+
+    for (const [name, options] of s3ImageTransformer.transformArgs) {
+      const type = options.arg.type === 'enum' ? `s3Image${options.arg.name}` : options.arg.type === 'array' ? [`s3Image${options.arg.name}`] : options.arg.type
+      args.push([name, type])
+    }
+    return Object.fromEntries((args)
+  }
+}
+
 module.exports = {
   imageKit: imageKitTransformer,
   cloudinary: cloudinaryTransformer,
-  sirv: sirvTransformer
+  sirv: sirvTransformer,
+  s3: s3ImageTransformer,
 }
