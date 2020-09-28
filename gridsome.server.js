@@ -28,7 +28,7 @@ function ImageCDN (api, options) {
               const haveUrl = (parent[ sourceField ] || parent[ info.path.key ])
 
               // Guards against empty image path from graphql query
-              if(!haveUrl) return sourceUrl
+              if(!haveUrl) return ''
 
               const sourceUrl = haveUrl.replace(site.baseUrl, '')
 
