@@ -1,4 +1,5 @@
 const path = require('path')
+const fromEntries = require('object.fromentries');
 
 const imageKitTransformer = {
   // Create a map of all available transforms, their prefixes, and the type
@@ -49,7 +50,7 @@ const imageKitTransformer = {
 
     return enums.map(({ name, values }) => schema.createEnumType({
       name: `ImageKitImage${name}`,
-      values: Object.fromEntries(values.map(value => [value.toUpperCase(), { value }]))
+      values: fromEntries(values.map(value => [value.toUpperCase(), { value }]))
     }))
   },
   createResolverArgs: () => {
@@ -59,7 +60,7 @@ const imageKitTransformer = {
       const type = options.arg.type === 'enum' ? `ImageKitImage${options.arg.name}` : options.arg.type
       args.push([name, type])
     }
-    return Object.fromEntries(args)
+    return fromEntries(args)
   }
 }
 
@@ -119,7 +120,7 @@ const cloudinaryTransformer = {
 
     return enums.map(({ name, values }) => schema.createEnumType({
       name: `CloudinaryImage${name}`,
-      values: Object.fromEntries(values.map(value => [value.toUpperCase().replace(':', '_'), { value }]))
+      values: fromEntries(values.map(value => [value.toUpperCase().replace(':', '_'), { value }]))
     }))
   },
   createResolverArgs: () => {
@@ -129,7 +130,7 @@ const cloudinaryTransformer = {
       const type = options.arg.type === 'enum' ? `CloudinaryImage${options.arg.name}` : options.arg.type
       args.push([name, type])
     }
-    return Object.fromEntries(args)
+    return fromEntries(args)
   }
 }
 
@@ -198,7 +199,7 @@ const sirvTransformer = {
 
     return enums.map(({ name, values }) => schema.createEnumType({
       name: `SirvImage${name}`,
-      values: Object.fromEntries(values.map(value => [value.toUpperCase(), { value }]))
+      values: fromEntries(values.map(value => [value.toUpperCase(), { value }]))
     }))
   },
   createResolverArgs: () => {
@@ -208,7 +209,7 @@ const sirvTransformer = {
       const type = options.arg.type === 'enum' ? `SirvImage${options.arg.name}` : options.arg.type
       args.push([name, type])
     }
-    return Object.fromEntries(args)
+    return fromEntries(args)
   }
 }
 
@@ -289,7 +290,7 @@ const s3ImageTransformer = {
 
     const objects = enums.map(({ name, values }) => schema.createEnumType({
       name: `s3Image${name}`,
-      values: Object.fromEntries(values.map(value => [value.toUpperCase().replace(':', '_'), { value }]))
+      values: fromEntries(values.map(value => [value.toUpperCase().replace(':', '_'), { value }]))
     }))
 
     objects.push(
@@ -312,7 +313,7 @@ const s3ImageTransformer = {
       const type = options.arg.type === 'enum' ? `s3Image${options.arg.name}` : options.arg.type === 'array' ? [`s3Image${options.arg.name}`] : options.arg.type
       args.push([name, type])
     }
-    return Object.fromEntries(args)
+    return fromEntries(args)
   }
 }
 
