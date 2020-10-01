@@ -1,5 +1,6 @@
 const path = require('path')
 const fromEntries = require('object.fromentries');
+const url = require('url');
 
 const imageKitTransformer = {
   // Create a map of all available transforms, their prefixes, and the type
@@ -236,7 +237,7 @@ const s3ImageTransformer = {
     ['quality', { prefix: 'q', arg: { type: 'Int' } }],
     ['format', { prefix: 'f', arg: { type: 'enum', name: 'Format', values: ['auto', 'webp', 'jpg', 'jpeg', 'png'] } }],
   ]),
-  urlCreator: (url, bucket, key, edits) => {
+  cloudfrontUrlCreator: (url, bucket, key, edits) => {
     const imageRequest = JSON.stringify({
       bucket: bucket,
       key: key,
@@ -247,6 +248,13 @@ const s3ImageTransformer = {
 
     // Return all our joined transforms & url
     return `${url}/${baseCodedString}`;
+  },
+  unsplashUrlCreator: (source, width) => {
+    const decomposedUrl =  new URL(source);
+
+    decomposedUrl.searchParams.set('w', width);
+
+    return decomposedUrl.href;
   },
   transformer: ({ cdn, sourceUrl, args }) => {
     const transformString = {}
@@ -266,10 +274,12 @@ const s3ImageTransformer = {
         let transforms = {
           resize: size,
           ...otherTransforms
-        }
-        size.url = s3ImageTransformer.urlCreator(cdn.baseUrl, underJournyControl[1], underJournyControl[3], transforms )
+        };
+        size.url = s3ImageTransformer.cloudfrontUrlCreator(cdn.baseUrl, underJournyControl[1], underJournyControl[3], transforms );
+      } else if (sourceUrl.includes('unsplash')) {
+        size.url = s3ImageTransformer.unsplashUrlCreator(sourceUrl, size.width);
       } else {
-        size.url = sourceUrl
+        size.url = sourceUrl;
       }
       return size
     })
